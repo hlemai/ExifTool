@@ -16,9 +16,9 @@ public class ExifTool {
         exifToolPath = path
     }
 
-    let filepath:String
+    private let filepath:String
 
-    var metadatas:[String:String]
+    public var metadatas:[String:String]
 
     private init(filepath:String) {
         self.filepath=filepath
