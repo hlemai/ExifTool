@@ -1,0 +1,2 @@
+# ExifTool
+SwiftWrapper to ExifTool
