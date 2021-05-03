@@ -14,7 +14,7 @@
             let exifData = ExifTool.read(fromurl: url)
             XCTAssert(exifData["FilePath"]==testFilePath)
             XCTAssert(exifData["File Type"]=="JPEG")
-            XCTAssert(exifData.count == 280)
+            XCTAssert(exifData.count == 258)
         }
         func testBadImage() {
             var testFilePath:String
@@ -55,5 +55,16 @@
             ExifTool.setExifTool(backup)
             XCTAssert(exifData["FilePath"]==testFilePath)
             XCTAssert(exifData["File Type"]==nil)
+        }
+        func testDirectory() {
+            var testFilePath:String
+            let filepath = Bundle.module.bundlePath 
+            testFilePath = filepath
+            
+            let url = URL(fileURLWithPath: testFilePath)
+            let exifData = ExifTool.read(fromurl: url)
+            XCTAssert(exifData["FilePath"]==testFilePath)
+            XCTAssert(exifData["File Type"]==nil)
+
         }
     }

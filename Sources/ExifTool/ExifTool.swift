@@ -63,8 +63,10 @@ public class ExifTool : Sequence {
         
         for lines in output.split(separator: "\n") {
             let cols = lines.split(separator: ":")
-            let key = String(cols[0]).trimmingCharacters(in: .whitespacesAndNewlines)
-            metadata[key]=String(cols[1]).trimmingCharacters(in: .whitespacesAndNewlines)
+            if(cols.count==2){
+                let key = String(cols[0]).trimmingCharacters(in: .whitespacesAndNewlines)
+                metadata[key]=String(cols[1]).trimmingCharacters(in: .whitespacesAndNewlines)
+            }
         }
         logger.info("Retreive \(self.metadata.count) metadata for \(self.filepath)")
     }
