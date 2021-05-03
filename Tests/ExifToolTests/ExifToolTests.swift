@@ -1,6 +1,7 @@
     import XCTest
     @testable import ExifTool
 
+    @available(macOS 11.00, *)
     final class ExifToolTests: XCTestCase {
         func testGoodImage() {
             var testFilePath:String
