@@ -1,64 +1,90 @@
 import Foundation
+import os.log
 
-@available(macOS 10.13, *)
-public class ExifTool {
+@available(macOS 11.00, *)
+public class ExifTool : Sequence {
     
-    //static var exifToolPath = "/opt/homebrew/bin/exiftool"
-    private static var exifToolPath = "/Users/hlemai/Dev/next/common/ext/exiftool/exiftool"
-
+    /// path for exiftool tool (https://exiftool.org)
+    static var exifToolPath = "/opt/homebrew/bin/exiftool"
+    /// factory to create and exiftool dictitionnary from a local url
     public static func read(fromurl:URL) -> ExifTool {
         let exif = ExifTool(filepath:fromurl.path)
         exif.fillMetataData()
         return exif
     }
-
+    /// ability to change the exifTool location. On X86 mac, homebrew location should be
+    /// /usr/local/Cellar/bin/exiftool
     public static func setExifTool(_ path:String) {
         exifToolPath = path
     }
-
+    /// path of image file
     private let filepath:String
-
-    public var metadatas:[String:String]
-
+    /// logger
+    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "ExifTool Wrapper")
+    /// metadata dictionnary
+    public var metadata:[String:String]
+    /// private initializer (use Factory)
     private init(filepath:String) {
         self.filepath=filepath
-        self.metadatas = [:] 
+        self.metadata = [:] 
     }
-
-
+    /// main function to set metadata from files
     private func fillMetataData() {
-        metadatas["FilePath"]=filepath
-
+        metadata["FilePath"]=filepath
+        // use external process to get info from pipe
         let task = Process()
         task.executableURL=URL(fileURLWithPath: ExifTool.exifToolPath)
         task.arguments = [filepath]
         let outputPipe = Pipe()
+        let errorPipe = Pipe()
         task.standardOutput = outputPipe
-         
+        task.standardError = errorPipe
         do {
             try task.run()
         }
         catch {
-            print("ERROR")
-            task.terminate()
+            logger.error("Error retrieving information from \(self.filepath)")
+            if(task.isRunning) {
+                task.terminate()
+                let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
+                logger.info("Detailled of stderror : \(String(decoding:errorData,as : UTF8.self))")
+            } else {
+                logger.warning("cannot run \(ExifTool.exifToolPath)")
+            }
+            return
         }
 
         let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
         let output = String(decoding: outputData, as: UTF8.self)        
+        let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
+        if !errorData.isEmpty {
+            logger.error("Detailled of stderror : \(String(decoding:errorData,as : UTF8.self))")
+        }
         
         for lines in output.split(separator: "\n") {
             let cols = lines.split(separator: ":")
             let key = String(cols[0]).trimmingCharacters(in: .whitespacesAndNewlines)
-            metadatas[key]=String(cols[1]).trimmingCharacters(in: .whitespacesAndNewlines)
+            metadata[key]=String(cols[1]).trimmingCharacters(in: .whitespacesAndNewlines)
         }
+        logger.info("Retreive \(self.metadata.count) metadata for \(self.filepath)")
     }
-
-    subscript(string:String) -> String? {
+    /// implemtation of iterator to fetch metadata
+    public func makeIterator() -> Dictionary<String, String>.Iterator  {
+        return metadata.makeIterator()
+    }
+    /// subscript to access to metadata
+    public subscript(string:String) -> String? {
         get {
-            metadatas[string]
+            metadata[string]
         }
         set(newValue) {
-            metadatas[string] = newValue
+            metadata[string] = newValue
+        }
+    }
+    /// count
+    public var count:Int {
+        get {
+            return metadata.count
         }
     }
 }
