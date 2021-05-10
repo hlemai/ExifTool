@@ -1,4 +1,9 @@
 # ExifTool
+<p align="center">
+    <a href="https://github.com/hlemai/ExifTool/actions">
+        <img src="https://github.com/hlemai/ExifTool/workflows/test/badge.svg" alt="Continuous Integration">
+    </a>
+</p>
 
 Simple swiftWrapper to ExifTool (https://exiftool.org)
 
