@@ -1,5 +1,8 @@
 # ExifTool
 <p align="center">
+    <a href="LICENSE">
+        <img src="https://img.shields.io/badge/license-MIT-brightgreen.svg" alt="MIT License">
+    </a>
     <a href="https://github.com/hlemai/ExifTool/actions">
         <img src="https://github.com/hlemai/ExifTool/workflows/test/badge.svg" alt="Continuous Integration">
     </a>
