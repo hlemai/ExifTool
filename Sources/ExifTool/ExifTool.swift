@@ -31,6 +31,7 @@ public class ExifTool : Sequence {
     /// main function to set metadata from files
     private func fillMetataData() {
         metadata["FilePath"]=filepath
+        logger.debug("Starting to retreive metadata for \(self.filepath)")
         // use external process to get info from pipe
         let task = Process()
         task.executableURL=URL(fileURLWithPath: ExifTool.exifToolPath)
