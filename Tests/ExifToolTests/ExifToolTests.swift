@@ -12,8 +12,8 @@
             }
             
             let url = URL(fileURLWithPath: testFilePath)
-            let exifData = ExifTool.read(fromurl: url)
-            XCTAssert(exifData["FilePath"]==testFilePath)
+            let exifData = ExifTool.read(fromurl: url).getMetadata(lang: "en")
+            XCTAssert(exifData["File Path"]==testFilePath)
             XCTAssert(exifData["File Type"]=="JPEG")
             XCTAssert(exifData.count == 258)
         }
@@ -25,8 +25,8 @@
                 testFilePath = "/Users/hlemai/Dev/next/common/ExifTool/Tests/ExifToolTests/Resources/fakeimage.txt.jpg"
             }
             let url = URL(fileURLWithPath: testFilePath)
-            let exifData = ExifTool.read(fromurl: url)
-            XCTAssert(exifData["FilePath"]==testFilePath)
+            let exifData = ExifTool.read(fromurl: url).getMetadata(lang: "en")
+            XCTAssert(exifData["File Path"]==testFilePath)
             XCTAssert(exifData["File Type"]=="TXT")
         }
         func testNoImage() {
@@ -37,8 +37,8 @@
                 testFilePath = "/Users/hlemai/Dev/next/common/ExifTool/Tests/ExifToolTests/Resources/fakeimage.arw"
             }
             let url = URL(fileURLWithPath: testFilePath)
-            let exifData = ExifTool.read(fromurl: url)
-            XCTAssert(exifData["FilePath"]==testFilePath)
+            let exifData = ExifTool.read(fromurl: url).getMetadata(lang: "en")
+            XCTAssert(exifData["File Path"]==testFilePath)
             XCTAssert(exifData["File Type"]==nil)
         }
 
@@ -52,9 +52,9 @@
                 testFilePath = "/Users/hlemai/Dev/next/common/ExifTool/Tests/ExifToolTests/Resources/DSC04247.jpg"
             }
             let url = URL(fileURLWithPath: testFilePath)
-            let exifData = ExifTool.read(fromurl: url)
+            let exifData = ExifTool.read(fromurl: url).getMetadata(lang: "en")
             ExifTool.setExifTool(backup)
-            XCTAssert(exifData["FilePath"]==testFilePath)
+            XCTAssert(exifData["File Path"]==testFilePath)
             XCTAssert(exifData["File Type"]==nil)
         }
         func testDirectory() {
@@ -63,8 +63,8 @@
             testFilePath = filepath
             
             let url = URL(fileURLWithPath: testFilePath)
-            let exifData = ExifTool.read(fromurl: url)
-            XCTAssert(exifData["FilePath"]==testFilePath)
+            let exifData = ExifTool.read(fromurl: url).getMetadata(lang: "en")
+            XCTAssert(exifData["File Path"]==testFilePath)
             XCTAssert(exifData["File Type"]==nil)
 
         }

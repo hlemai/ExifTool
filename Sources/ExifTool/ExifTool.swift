@@ -6,16 +6,14 @@ public class ExifTool : Sequence {
     
     /// path for exiftool tool (https://exiftool.org)
     static var exifToolPath = "/opt/homebrew/bin/exiftool"
+    static var catalog : MetaCatalog?
+    static var flatenedCatalog: [String:Meta]?
+    
     /// factory to create and exiftool dictitionnary from a local url
     public static func read(fromurl:URL) -> ExifTool {
+        buildMetaCatalog()
         let exif = ExifTool(filepath:fromurl.path)
         exif.fillMetataData()
-        return exif
-    }
-    /// factory to create  exiftool dictitionnary from a local url and add lcoalisation of KEYS
-    public static func read(fromurl:URL, lang:String) -> ExifTool {
-        let exif = ExifTool(filepath:fromurl.path)
-        exif.fillMetataData(lang:lang)
         return exif
     }
 
@@ -24,25 +22,84 @@ public class ExifTool : Sequence {
     public static func setExifTool(_ path:String) {
         exifToolPath = path
     }
+    
+    private static func buildMetaCatalog() {
+        if catalog == nil {
+            // use external process to get info from pipe
+            let task = Process()
+            task.executableURL=URL(fileURLWithPath: ExifTool.exifToolPath)
+            task.arguments = ["-listx"]
+            let outputPipe = Pipe()
+            let errorPipe = Pipe()
+            task.standardOutput = outputPipe
+            task.standardError = errorPipe
+            do {
+                try task.run()
+            }
+            catch {
+                logger.error("Error retrieving information catalog")
+                if(task.isRunning) {
+                    task.terminate()
+                    let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
+                    logger.info("Detailled of stderror : \(String(decoding:errorData,as : UTF8.self))")
+                } else {
+                    logger.warning("cannot run \(ExifTool.exifToolPath)")
+                }
+                return
+            }
+
+            let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
+            let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
+            if !errorData.isEmpty {
+                logger.error("Detailled of stderror : \(String(decoding:errorData,as : UTF8.self))")
+            }
+            do {
+                let xmlDoc = try XMLDocument(data: outputData)
+                catalog = MetaCatalog.buildfrom(xmlDocument: xmlDoc)
+                flatenedCatalog = catalog?.flattenDic
+            } catch {
+                logger.error("Error Parsing XML : \(error.localizedDescription)")
+            }
+        }
+    }
+    
     /// path of image file
     private let filepath:String
     /// logger
-    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "ExifTool Wrapper")
-    /// metadata dictionnary
+    private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "ExifTool Wrapper")
+    
+    /// metadata dictionnary with keys
     public var metadata:[String:String]
+    
+    /// get dictionnary with lang desc
+    public func getMetadata(lang:String) -> [String:String] {
+        
+        var metaInLocal = [String : String](minimumCapacity: metadata.capacity)
+        
+        guard let cata = ExifTool.flatenedCatalog else {
+            return metadata
+        }
+        
+        metadata.forEach { (key,value) in
+            let newkey = cata[key]?.descDict[lang] ?? cata[key]?.descDict["en"] ?? key
+            metaInLocal[newkey] = value
+        }
+        return metaInLocal
+    }
+    
     /// private initializer (use Factory)
     private init(filepath:String) {
         self.filepath=filepath
         self.metadata = [:] 
     }
     /// main function to set metadata from files
-    private func fillMetataData(lang:String = "en") {
+    private func fillMetataData() {
         metadata["FilePath"]=filepath
-        logger.debug("Starting to retreive metadata for \(self.filepath)")
+        ExifTool.logger.debug("Starting to retreive metadata for \(self.filepath)")
         // use external process to get info from pipe
         let task = Process()
         task.executableURL=URL(fileURLWithPath: ExifTool.exifToolPath)
-        task.arguments = ["-lang",lang,filepath]
+        task.arguments = ["-s",filepath]
         let outputPipe = Pipe()
         let errorPipe = Pipe()
         task.standardOutput = outputPipe
@@ -51,13 +108,13 @@ public class ExifTool : Sequence {
             try task.run()
         }
         catch {
-            logger.error("Error retrieving information from \(self.filepath)")
+            ExifTool.logger.error("Error retrieving information from \(self.filepath)")
             if(task.isRunning) {
                 task.terminate()
                 let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
-                logger.info("Detailled of stderror : \(String(decoding:errorData,as : UTF8.self))")
+                ExifTool.logger.info("Detailled of stderror : \(String(decoding:errorData,as : UTF8.self))")
             } else {
-                logger.warning("cannot run \(ExifTool.exifToolPath)")
+                ExifTool.logger.warning("cannot run \(ExifTool.exifToolPath)")
             }
             return
         }
@@ -66,7 +123,7 @@ public class ExifTool : Sequence {
         let output = String(decoding: outputData, as: UTF8.self)        
         let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
         if !errorData.isEmpty {
-            logger.error("Detailled of stderror : \(String(decoding:errorData,as : UTF8.self))")
+            ExifTool.logger.error("Detailled of stderror : \(String(decoding:errorData,as : UTF8.self))")
         }
         
         for lines in output.split(separator: "\n") {
@@ -76,7 +133,7 @@ public class ExifTool : Sequence {
                 metadata[key]=String(cols[1]).trimmingCharacters(in: .whitespacesAndNewlines)
             }
         }
-        logger.info("Retreive \(self.metadata.count) metadata for \(self.filepath)")
+        ExifTool.logger.info("Retreive \(self.metadata.count) metadata for \(self.filepath)")
     }
     /// implemtation of iterator to fetch metadata
     public func makeIterator() -> Dictionary<String, String>.Iterator  {
