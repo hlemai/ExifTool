@@ -12,6 +12,13 @@ public class ExifTool : Sequence {
         exif.fillMetataData()
         return exif
     }
+    /// factory to create  exiftool dictitionnary from a local url and add lcoalisation of KEYS
+    public static func read(fromurl:URL, lang:String) -> ExifTool {
+        let exif = ExifTool(filepath:fromurl.path)
+        exif.fillMetataData(lang:lang)
+        return exif
+    }
+
     /// ability to change the exifTool location. On X86 mac, homebrew location should be
     /// /usr/local/Cellar/bin/exiftool
     public static func setExifTool(_ path:String) {
@@ -29,13 +36,13 @@ public class ExifTool : Sequence {
         self.metadata = [:] 
     }
     /// main function to set metadata from files
-    private func fillMetataData() {
+    private func fillMetataData(lang:String = "en") {
         metadata["FilePath"]=filepath
         logger.debug("Starting to retreive metadata for \(self.filepath)")
         // use external process to get info from pipe
         let task = Process()
         task.executableURL=URL(fileURLWithPath: ExifTool.exifToolPath)
-        task.arguments = [filepath]
+        task.arguments = ["-lang",lang,filepath]
         let outputPipe = Pipe()
         let errorPipe = Pipe()
         task.standardOutput = outputPipe
