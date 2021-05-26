@@ -42,4 +42,10 @@ let exifData = ExifTool.read(fromurl: url)
 for meta in exifData {
     print("\(meta.key)->\(meta.value)")
 }
+
+// to get in a dictionnary with local key
+for meta in exifData.getMetadata(lang: "fr") {
+    print("\(meta.key)->\(meta.value)")
+}
+
 ```
