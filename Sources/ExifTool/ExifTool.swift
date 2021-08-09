@@ -66,7 +66,7 @@ public class ExifTool : Sequence {
     /// path of image file
     private let filepath:String
     /// logger
-    private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "ExifTool Wrapper")
+    private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "ExifTool", category: "ExifTool Wrapper")
     
     /// metadata dictionnary with keys
     public var metadata:[String:String]
