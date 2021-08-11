@@ -38,6 +38,7 @@ ExifTool.setExifTool("/path/to/exiftool")
 let testFilePath = "DSC04247.jpg"
 let url = URL(fileURLWithPath: testFilePath)
 let exifData = ExifTool.read(fromurl: url)
+// optionnally it is possibile to filter to specific tags by tagname : ExifTool.read(from:url,tags:["ISO"])
 
 for meta in exifData {
     print("\(meta.key)->\(meta.value)")
