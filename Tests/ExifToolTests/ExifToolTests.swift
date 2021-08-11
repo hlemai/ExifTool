@@ -66,6 +66,21 @@
             let exifData = ExifTool.read(fromurl: url).getMetadata(lang: "en")
             XCTAssert(exifData["File Path"]==testFilePath)
             XCTAssert(exifData["File Type"]==nil)
+        }
+        func testRawAndfilteredMeta() {
+            var testFilePath:String
+            if let filepath = Bundle.module.pathForImageResource("_DSC5130.ARW") {
+                testFilePath = filepath
+            } else {
+                testFilePath = "/Users/hlemai/Dev/next/common/ExifTool/Tests/ExifToolTests/Resources/_DSC5130.ARW"
+            }
+            
+            let url = URL(fileURLWithPath: testFilePath)
+            let exifData = ExifTool.read(fromurl: url,tags:["SequenceLength","FocusLocation"]).getMetadata(lang: "en")
+            XCTAssert(exifData["ISO"] == nil)
+            XCTAssert( (exifData["Sequence Length"] ?? "").starts(with: "1 "))
+            XCTAssert(exifData.count == 3)
+            
 
         }
     }

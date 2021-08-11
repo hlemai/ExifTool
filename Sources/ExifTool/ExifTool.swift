@@ -4,6 +4,8 @@ import os.log
 @available(macOS 11.00, *)
 public class ExifTool : Sequence {
     
+    //MARK: Static part
+    
     /// path for exiftool tool (https://exiftool.org)
     static var exifToolPath = "/opt/homebrew/bin/exiftool"
     static var catalog : MetaCatalog?
@@ -13,7 +15,15 @@ public class ExifTool : Sequence {
     public static func read(fromurl:URL) -> ExifTool {
         buildMetaCatalog()
         let exif = ExifTool(filepath:fromurl.path)
-        exif.fillMetataData()
+        exif.fillMetataData(tags:[])
+        return exif
+    }
+
+    /// factory to create and exiftool dictitionnary from a local url limited to specific tags
+    public static func read(fromurl:URL, tags:[String]) -> ExifTool {
+        buildMetaCatalog()
+        let exif = ExifTool(filepath:fromurl.path)
+        exif.fillMetataData(tags:tags)
         return exif
     }
 
@@ -22,7 +32,7 @@ public class ExifTool : Sequence {
     public static func setExifTool(_ path:String) {
         exifToolPath = path
     }
-    
+    /// Once collect metadata translator
     private static func buildMetaCatalog() {
         if catalog == nil {
             // use external process to get info from pipe
@@ -63,11 +73,13 @@ public class ExifTool : Sequence {
         }
     }
     
-    /// path of image file
-    private let filepath:String
     /// logger
     private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "ExifTool", category: "ExifTool Wrapper")
-    
+
+    //MARK: Non static
+    /// path of image file
+    private let filepath:String
+
     /// metadata dictionnary with keys
     public var metadata:[String:String]
     
@@ -92,14 +104,17 @@ public class ExifTool : Sequence {
         self.filepath=filepath
         self.metadata = [:] 
     }
+    
     /// main function to set metadata from files
-    private func fillMetataData() {
+    private func fillMetataData(tags:[String]) {
         metadata["FilePath"]=filepath
         ExifTool.logger.debug("Starting to retreive metadata for \(self.filepath)")
         // use external process to get info from pipe
         let task = Process()
         task.executableURL=URL(fileURLWithPath: ExifTool.exifToolPath)
-        task.arguments = ["-s",filepath]
+        task.arguments = ["-s"]
+        task.arguments?.append(contentsOf: tags.map({"-"+$0}))
+        task.arguments?.append(filepath)
         let outputPipe = Pipe()
         let errorPipe = Pipe()
         task.standardOutput = outputPipe
@@ -135,7 +150,9 @@ public class ExifTool : Sequence {
         }
         ExifTool.logger.info("Retreive \(self.metadata.count) metadata for \(self.filepath)")
     }
-    /// implemtation of iterator to fetch metadata
+    
+    // MARK: iterator and access to meta
+    /// implementation of iterator to fetch metadata
     public func makeIterator() -> Dictionary<String, String>.Iterator  {
         return metadata.makeIterator()
     }
