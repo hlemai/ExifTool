@@ -34,7 +34,7 @@ public class ExifTool : Sequence {
     }
 
     /// prefectch in queue metacatalog
-    public static func PretechMetaCatalog() {
+    public static func pretechMetaCatalog() {
         DispatchQueue(label: "Exif init", qos: .background).async {
             buildMetaCatalog()
         }
