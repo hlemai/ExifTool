@@ -32,6 +32,15 @@ public class ExifTool : Sequence {
     public static func setExifTool(_ path:String) {
         exifToolPath = path
     }
+
+    /// prefectch in queue metacatalog
+    public static func PretechMetaCatalog() {
+        DispatchQueue(label: "Exif init", qos: .background).async {
+            buildMetaCatalog()
+        }
+
+    }
+
     /// Once collect metadata translator
     private static func buildMetaCatalog() {
         if catalog == nil {
