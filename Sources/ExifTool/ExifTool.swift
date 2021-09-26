@@ -108,6 +108,38 @@ public class ExifTool : Sequence {
         return metaInLocal
     }
     
+    public func update(metadata newFields: [String: String]) {
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: ExifTool.exifToolPath)
+        task.arguments = ["-overwrite_original"]
+        task.arguments?.append(contentsOf: newFields.map({ "-\($0)=\($1)" }))
+        task.arguments?.append(filepath)
+        
+        let errorPipe = Pipe()
+        task.standardError = errorPipe
+        do {
+            try task.run()
+        }
+        catch {
+            ExifTool.logger.error("Error updating information at \(self.filepath)")
+            if(task.isRunning) {
+                task.terminate()
+                let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
+                ExifTool.logger.info("Detailled of stderror : \(String(decoding:errorData,as : UTF8.self))")
+            } else {
+                ExifTool.logger.warning("cannot run \(ExifTool.exifToolPath)")
+            }
+            return
+        }
+
+        let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
+        if !errorData.isEmpty {
+            ExifTool.logger.error("Detailled of stderror : \(String(decoding:errorData,as : UTF8.self))")
+        }
+        
+        ExifTool.logger.info("Updated \(newFields.count) metadata for \(self.filepath)")
+    }
+    
     /// private initializer (use Factory)
     private init(filepath:String) {
         self.filepath=filepath
