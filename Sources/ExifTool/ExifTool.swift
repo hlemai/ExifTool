@@ -108,6 +108,9 @@ public class ExifTool : Sequence {
         return metaInLocal
     }
     
+    /// update metadata
+    ///     - parameters :
+    ///             - metadata : dictionnary of Key Values to update
     public func update(metadata newFields: [String: String]) {
         let task = Process()
         task.executableURL = URL(fileURLWithPath: ExifTool.exifToolPath)
@@ -116,7 +119,11 @@ public class ExifTool : Sequence {
         task.arguments?.append(filepath)
         
         let errorPipe = Pipe()
+        let outputPipe = Pipe()
+        
         task.standardError = errorPipe
+        task.standardOutput = outputPipe
+        
         do {
             try task.run()
         }
@@ -132,6 +139,9 @@ public class ExifTool : Sequence {
             return
         }
 
+        let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
+        ExifTool.logger.debug("response: \(String(decoding: outputData,as: UTF8.self))")
+        
         let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
         if !errorData.isEmpty {
             ExifTool.logger.error("Detailled of stderror : \(String(decoding:errorData,as : UTF8.self))")
