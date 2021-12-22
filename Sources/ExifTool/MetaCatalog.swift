@@ -77,6 +77,7 @@ extension MetaCatalog {
         return catalog
     }
 
+    /// return flatten directory
     var flattenDic: [String: Meta] {
             var flattened: [String: Meta] = [:]
             self.forEach({ _, value in
