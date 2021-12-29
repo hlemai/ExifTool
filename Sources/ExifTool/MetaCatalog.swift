@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import XMLDocument
 
 struct Meta {
     var name: String
