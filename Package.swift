@@ -16,11 +16,14 @@ let package = Package(
     dependencies: [
         // Dependencies declare other packages that this package depends on.
         // .package(url: /* package url */, from: "1.0.0"),
+        .package(name: "XMLDocument", url: "https://github.com/hlemai/XMLDocument.git", .upToNextMajor(from: "1.0.0"))
     ],
     targets: [
         .target(
             name: "ExifTool",
-            dependencies: []),
+            dependencies: [
+                .productItem(name: "XMLDocument", package: "XMLDocument", condition: .when(platforms: [.iOS]))
+            ]),
         .testTarget(
             name: "ExifToolTests",
             dependencies: ["ExifTool"],
